@@ -1,0 +1,13 @@
+attributes:
+  horizon_crt:
+    value: ""
+    label: "CRT"
+    description: "Certificate .crt content"
+    weight: 10
+    type: "password"
+  horizon_key:
+    value: ""
+    label: "Key"
+    description: "Certificate .key content"
+    weight: 10
+    type: "password"

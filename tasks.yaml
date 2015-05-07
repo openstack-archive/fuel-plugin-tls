@@ -1,0 +1,15 @@
+# Deployment is required for controllers
+- role: ['controller']
+  stage: post_deployment
+  type: puppet
+  parameters:
+    puppet_manifest: puppet/manifests/site.pp
+    puppet_modules:  "puppet/modules/:/etc/puppet/modules/"
+    timeout: 360
+- role: ['compute']
+  stage: post_deployment
+  type: puppet
+  parameters:
+    puppet_manifest: puppet/manifests/site_compute.pp
+    puppet_modules:  "puppet/modules/:/etc/puppet/modules/"
+    timeout: 360
