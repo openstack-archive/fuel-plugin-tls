@@ -1,0 +1,21 @@
+# If you just change the port or add more ports here, you will likely also
+# have to change the VirtualHost statement
+
+NameVirtualHost *:80
+Listen <%= @bind_address %>:80
+
+<% if @osfamily == 'RedHat' -%>
+NameVirtualHost *:443
+Listen <%= @bind_address %>:443
+<% else %>
+<IfModule mod_ssl.c>
+    # Server Name Indication for SSL named virtual hosts is currently not
+    # supported by MSIE on Windows XP.
+    NameVirtualHost *:443
+    Listen <%= @bind_address %>:443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+    Listen <%= @bind_address %>:443
+</IfModule>
+<% end %>
