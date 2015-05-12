@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Le Trocquer <remi.letrocquer@orange.com>
+Workflow+1: Le Trocquer <remi.letrocquer@orange.com>
+Submitted-by: Jenkins
+Submitted-at: Tue, 12 May 2015 08:32:30 +0000
+Reviewed-on: https://review.openstack.org/181416
+Project: stackforge/fuel-plugin-tls
+Branch: refs/heads/master
