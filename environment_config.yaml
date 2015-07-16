@@ -9,5 +9,11 @@ attributes:
     value: ""
     label: "Key"
     description: "Certificate .key content"
-    weight: 10
+    weight: 11
+    type: "password"
+  horizon_ca:
+    value: ""
+    label: "CA"
+    description: "Certificate .ca content"
+    weight: 12
     type: "password"

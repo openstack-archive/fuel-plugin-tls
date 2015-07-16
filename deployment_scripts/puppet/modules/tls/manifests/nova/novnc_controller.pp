@@ -16,9 +16,4 @@ class tls::nova::novnc_controller (
     enable  => true,
     ensure  => running,
   }
-
-  service { $httpd_service:
-    enable  => true,
-    ensure  => running,
-  }
 }

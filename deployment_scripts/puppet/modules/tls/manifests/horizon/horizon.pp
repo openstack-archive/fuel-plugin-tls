@@ -1,13 +1,39 @@
 class tls::horizon::horizon(
-  $horizon_crt,
-  $horizon_key,
-  $bind_address,
+  $bind_address = '*',
+  $controllers,
+  $public_virtual_ip,
+  $internal_virtual_ip,
 ) {
   include tls::params
-
-  $root_url       = $tls::params::root_url
-  $ssl_cert_file  = $tls::params::tls_cert_file
-  $ssl_key_file   = $tls::params::tls_key_file
+  $ssl_port                       = 443
+  $horizon_hash                   = hiera_hash('horizon',{})
+  $root_url                       = $tls::params::root_url
+  $horizon_cert                   = $tls::params::tls_cert_file
+  $horizon_key                    = $tls::params::tls_key_file
+  $horizon_ca                     = $tls::params::tls_ca_file
+  $controller_internal_addresses  = nodes_to_hash($controllers,'name','internal_address')
+  $controller_nodes               = ipsort(values($controller_internal_addresses))
+  $cache_server_ip                = hiera('memcache_servers', $controller_nodes)
+  $cache_server_port              = hiera('memcache_server_port', '11211')
+  $swift                          = false
+  $neutron                        = hiera('use_neutron')
+  $horizon_app_links              = undef
+  $keystone_host                  = hiera('management_vip')
+  $keystone_scheme                = 'http'
+  $keystone_default_role          = '_member_'
+  $verbose                        = hiera('verbose', true)
+  $debug                          = hiera('debug')
+  $api_result_limit               = 1000
+  $package_ensure                 = hiera('horizon_package_ensure', 'installed')
+  $use_ssl                        = true
+  $use_syslog                     = hiera('use_syslog', true)
+  $log_level                      = 'WARNING'
+  $nova_quota                     = hiera('nova_quota')
+  $local_settings_template        = 'openstack/horizon/local_settings.py.erb'
+  $django_session_engine          = 'django.contrib.sessions.backends.cache'
+  $servername                     = hiera('public_vip')
+  $cache_backend                  = 'horizon.backends.memcached.HorizonMemcached'
+  $cache_options                  = ["'SOCKET_TIMEOUT': 1","'SERVER_RETRIES': 1","'DEAD_RETRY': 1"]
   
   #update horizon config file
   exec { "USE_SSL":
@@ -51,35 +77,138 @@ class tls::horizon::horizon(
     }
   }
 
-  #update apache config file 
-  file { 'openstack-dashboard.conf' :
-    ensure  => present,
-    path    => $tls::params::apache_conf_file,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-    content => template('tls/openstack-dashboard.conf.erb'),
-    notify  => Service[$tls::params::httpd_service_name],
+  if $horizon_hash['secret_key'] {
+    $secret_key = $horizon_hash['secret_key']
+  } else {
+    $secret_key = 'dummy_secret_key'
   }
 
-  file { 'port.conf' :
-    ensure  => present,
-    path    => $tls::params::apache_port_file,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-    content => template('tls/port.conf.erb'),
-    notify  => Service[$tls::params::httpd_service_name],
+  if $debug { #syslog and nondebug case
+    #We don't realy want django debug, it is too verbose.
+    $django_debug   = false
+    $django_verbose = false
+    $log_level_real = 'DEBUG'
+  } elsif $verbose {
+    $django_verbose = true
+    $django_debug   = false
+    $log_level_real = 'INFO'
+  } else {
+    $django_verbose = false
+    $django_debug   = false
+    $log_level_real = $log_level
   }
 
-  file { 'vhost.conf' :
-    ensure  => present,
-    path    => $tls::params::apache_vhost_file,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-    content => template('tls/vhost.erb'),
-    notify  => Service[$tls::params::httpd_service_name],
+  apache::listen{ $ssl_port:}
+  apache::namevirtualhost{ "*:$ssl_port":}
+
+  class { '::horizon':
+    bind_address            => $bind_address,
+    cache_server_ip         => $cache_server_ip,
+    cache_server_port       => $cache_server_port,
+    cache_backend           => $cache_backend,
+    cache_options           => $cache_options,
+    secret_key              => $secret_key,
+    swift                   => $swift,
+    package_ensure          => $package_ensure,
+    horizon_app_links       => $horizon_app_links,
+    keystone_host           => $keystone_host,
+    keystone_scheme         => $keystone_scheme,
+    keystone_default_role   => $keystone_default_role,
+    django_debug            => $django_debug,
+    api_result_limit        => $api_result_limit,
+    listen_ssl              => $use_ssl,
+    log_level               => $log_level_real,
+    local_settings_template => $local_settings_template,
+    configure_apache        => false,
+    django_session_engine   => $django_session_engine,
+    allowed_hosts           => '*',
+    secure_cookies          => false,
+    horizon_cert           => $horizon_cert ,
+    horizon_key            => $horizon_key,
+    horizon_ca             => $horizon_ca
+  }
+
+  class { '::horizon::wsgi::apache':
+    priority       => false,
+    servername     => $public_virtual_ip,
+    bind_address   => $bind_address,
+    wsgi_processes => $wsgi_processes,
+    wsgi_threads   => $wsgi_threads,
+    horizon_cert           => $horizon_cert ,
+    horizon_key            => $horizon_key,
+    horizon_ca            => $horizon_ca,
+    listen_ssl     => $use_ssl,
+    extra_params      => {
+      default_vhost   => true,
+      add_listen      => false,
+      ssl_protocol    => '+TLSv1',
+      ssl_cipher      => 'HIGH:!RC4:!MD5:!aNULL:!eNULL:!EXP:!LOW:!MEDIUM',
+      custom_fragment => template("openstack/horizon/wsgi_vhost_custom.erb"),
+    },
+  } ~>
+  Service[$::apache::params::service_name]
+
+  Haproxy::Service        { use_include => true }
+  Haproxy::Balancermember { use_include => true }
+
+  $haproxy_config_options = {
+   'option'      => ['ssl-hello-chk', 'tcpka'],
+   'stick-table' => 'type ip size 200k expire 30m',
+   'stick'       => 'on src',
+   'balance'     => 'source',
+   'timeout'     => ['client 3h', 'server 3h'],
+   'mode'        => 'tcp',
+  }
+
+  haproxy::listen { 'horizon-ssl':
+    order     => '017',
+    ipaddress => $public_virtual_ip,
+    ports     => '443',
+    options   => $haproxy_config_options,
+    mode      => 'tcp',
+  }
+
+  haproxy::balancermember { 'horizon-ssl':
+    order             => '017',
+    listening_service => 'horizon-tls',
+    server_names      => filter_hash($controllers, 'name'),
+    ipaddresses       => filter_hash($controllers, 'internal_address'),
+    ports             => '443',
+    options           => 'weight 1 check',
+    define_cookies    => false,
+    define_backups    => false,
+  }
+
+  ##################################################################################
+
+  $haproxy_config_options_nova = {
+   'option'      => ['ssl-hello-chk', 'tcpka'],
+   'mode'        => 'tcp',
+  }
+
+  haproxy::listen { 'nova-novncproxy':
+    order     => '170',
+    ipaddress => $public_virtual_ip,
+    ports     => '6080',
+    options   => $haproxy_config_options_nova,
+    mode      => 'tcp',
+  }
+
+  haproxy::balancermember { 'nova-novncproxy':
+    order             => '170',
+    listening_service => 'horizon-tls',
+    server_names      => filter_hash($controllers, 'name'),
+    ipaddresses       => filter_hash($controllers, 'internal_address'),
+    ports             => '6080',
+    options           => 'check',
+    define_cookies    => false,
+    define_backups    => false,
+  }
+  ######################################################################################
+
+  service { 'haproxy':
+    enable  => true,
+    ensure  => running,
   }
 
 }
