@@ -15,7 +15,7 @@ Requirements
 
 | Requirement                      | Version/Comment                                         |
 |----------------------------------|---------------------------------------------------------|
-| Mirantis Openstack compatibility | 6.0                                                     |
+| Mirantis Openstack compatibility | 6.1                                                     |
 |----------------------------------|---------------------------------------------------------|
 | Crt & Key files                  | You have a crt & key files to provide before deployment |
 
@@ -43,20 +43,20 @@ Https plugin installation
 
     ``pip install fuel-plugin-builder``
 
-3. Build nova-nfs Fuel plugin:
+3. Build tls Fuel plugin:
 
    ``fpb --build fuel-plugin-tls/``
 
-4. The tls-<x.x.x>.fp file will be created in the plugin folder (fuel-plugin-tls)
+4. The tls-<x.x.x>.rpm file will be created in the plugin folder (fuel-plugin-tls)
 
 5. Move this file to the Fuel Master node with secure copy (scp):
 
-   ``scp tls-<x.x.x>.fp root@:<the_Fuel_Master_node_IP address>:/tmp``
+   ``scp tls-<x.x.x>.rpm root@:<the_Fuel_Master_node_IP address>:/tmp``
    ``cd /tmp``
 
-6. Install the nova-nfs plugin:
+6. Install the tls plugin:
 
-   ``fuel plugins --install tls-<x.x.x>.fp``
+   ``fuel plugins --install tls-<x.x.x>.rpm``
 
 6. Plugin is ready to use and can be enabled on the Settings tab of the Fuel web UI.
 
@@ -78,7 +78,7 @@ https plugin configuration
     - the certificate .key content
 
 	
-You must pass your .crt and .key files via fuel UI (settings tab)
+You must pass your .crt, .key, .ca files via fuel UI (settings tab)
 When you pass the content of the files in fuel ui, some "space" characters will appear, don't care about this puppet will remove it.
 
 CRT file must be in the following format : 
@@ -136,6 +136,30 @@ X43ceACVpWiv5DmBtEUrB8dbwxEJFaoPGqEswwdh1FDxzfsPdapyqGI5B8zRjnpa
 SR2QEYok/8lZeDgUOhXkGg==
 -----END PRIVATE KEY-----
 
+CA file must be in the following format : 
+
+-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAJHydV1v41XIMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV
+BAYTAkZSMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTMwMTAyNDU3WhcNMTYwMTMwMTAyNDU3WjBF
+MQswCQYDVQQGEwJGUjETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEAqwHssa1A2alSVh8ZZvKffGaix7mSFMDsFjUgPShqbAZ8xGQynvrHPel9
+A8E6ml0sGzHDwk8gobpu7k1wuMhcs7Np88xu5GtR1DhZWQ8MUGWHfflyjguMjtzF
+pZg4j0M14SE2INwwsRRtvC0/aeV1/q7HqfTk7+y01g/N4OKvYwndNp2lbSjBZZF4
+qbL9QD5iesOptxRryJ8tcm47i6hC4LTunz9pgVI13rtlOoqtXjf07ytMydBbzpeR
+4joaPAjbPf5ywf+I/n8XFxy6QPC9qAm2H3Gpo/5bb7+9S8AOhYqvWEKNotvyX1E8
+aiDLV+LHkL45Xpx47YBty6L8qNuejwIDAQABo1AwTjAdBgNVHQ4EFgQUVQNmpJDO
+w5eVB3yjU80NUZSKZlcwHwYDVR0jBBgwFoAUVQNmpJDOw5eVB3yjU80NUZSKZlcw
+DAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOCAQEAqadjZT7kMXRf5bp14nfI
+20m6G/i5aHBo+0v+6lRtmk5wD/D6VsOh+R/HjjDDo68y/WEWXxQbuOYX+HZCABpf
+VTA4oLvY4t3gtzt9Q21VtK/l5e3yyxo2JBnsPqc5wmWDlNO8aImF+QrvovkuyTV5
+mX6suZgby4eTllmVzBNK/+FMuPlsSPwB8SxEbu04aOIcwbn4LCCZJZEG6INVGSS8
+SRg1iER8mu2Jf45JKkMFDqUhCUp/ejM2t686O7olqKtmF53rDSBnzhtabdgTIx3F
+RjCb281gwvwSgyFfUgt5TIIq1o/kci2N33zuxaifFVz6DtDxKegoZg73bUMg/OA2
+bg==
+-----END CERTIFICATE-----
+
 Here is a screenshot of the fields
 
 ![tls fields](./figures/tls-plugin.png "tls-fields")
@@ -158,6 +182,10 @@ None.
 
 Release Notes
 -------------
+
+**2.0.0**
+
+* migrate plugins from 1.0.0 to 2.0.0 package version
 
 **1.0.0**
 

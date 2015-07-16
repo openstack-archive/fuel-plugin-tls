@@ -2,7 +2,8 @@
 
 CRT=$1
 KEY=$2
-SSL_PATH=$3
+CA=$3
+SSL_PATH=$4
 ############################################################################################################################
 # Horizon part
 ############################################################################################################################
@@ -13,6 +14,12 @@ echo "-----END CERTIFICATE-----" >> $SSL_PATH/horizon.crt
 echo "-----BEGIN PRIVATE KEY-----" > $SSL_PATH/horizon.key
 echo $KEY  | awk -F "-----" '{ print $3}' | sed 's/ /\n/g' | sed '/^$/d' >> $SSL_PATH/horizon.key
 echo "-----END PRIVATE KEY-----" >> $SSL_PATH/horizon.key
+
+echo "-----BEGIN CERTIFICATE-----" > $SSL_PATH/horizon.ca
+echo $CA  | awk -F "-----" '{ print $3}' | sed 's/ /\n/g' | sed '/^$/d' >> $SSL_PATH/horizon.ca
+echo "-----END CERTIFICATE-----" >> $SSL_PATH/horizon.ca
+
+
 
 ############################################################################################################################
 # Nova part

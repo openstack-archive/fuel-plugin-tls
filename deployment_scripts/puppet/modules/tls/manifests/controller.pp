@@ -1,9 +1,16 @@
 class tls::controller(
+  $controllers,
+  $public_virtual_ip,
+  $internal_virtual_ip,
   $horizon_crt,
   $horizon_key,
-  $external_ip,
-  $bind_address
+  $horizon_ca,
+  $external_ip
 ) {
+  $nodes_hash = hiera('nodes')
+  $node = filter_nodes($nodes_hash,'name',$::hostname)
+  $internal_address = $node[0]['internal_address']
+  $bind_address = $internal_address
   $server_hostname = $external_ip
   include tls::params
   $apache_tls_path = $tls::params::apache_tls_path
@@ -33,20 +40,23 @@ class tls::controller(
        require => File["$apache_tls_path"]
    }
    exec {'format.sh':
-       command => "bash -c \"format.sh \'${horizon_crt}\' \'${horizon_key}\' \'${apache_tls_path}\'\"",
+       command => "bash -c \"format.sh \'${horizon_crt}\' \'${horizon_key}\'  \'${horizon_ca}\' \'${apache_tls_path}\'\"",
        path => '/usr/sbin:/usr/bin:/sbin:/bin',
        require => File['format.sh'],
-       before  => File['openstack-dashboard.conf'],
    }
-  class { 'tls::horizon::horizon':
-    horizon_crt   =>  $horizon_crt,
-    horizon_key   =>  $horizon_key,
-    bind_address   =>  $bind_address
-  }  
   class { 'tls::nova::novnc_controller':
     server_hostname   =>  $server_hostname,
     novnc_service   =>  $tls::params::nova_novnc_service,
-    httpd_service   =>  $tls::params::httpd_service_name      
+    httpd_service   =>  $tls::params::httpd_service_name
+  }->
+  class { 'tls::horizon::horizon':
+    bind_address   =>  $bind_address,
+    controllers           =>  $controllers,
+    public_virtual_ip     =>  $public_virtual_ip,
+    internal_virtual_ip   =>  $internal_virtual_ip,
   }  
+  exec { "ha_proxy_restart":
+    command => "/usr/sbin/crm resource restart p_haproxy",
+  }
 }
   

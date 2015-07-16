@@ -9,5 +9,5 @@
 # Learn more about module testing here:
 # http://docs.puppetlabs.com/guides/tests_smoke.html
 #
-include tls::controller_ha
+include tls::controller
 include tls::compute
