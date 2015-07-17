@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: LoicNicolle <loic.nicolle@orange.com>
+Workflow+1: LoicNicolle <loic.nicolle@orange.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 17 Jul 2015 13:50:31 +0000
+Reviewed-on: https://review.openstack.org/202548
+Project: stackforge/fuel-plugin-tls
+Branch: refs/heads/master
