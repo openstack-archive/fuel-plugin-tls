@@ -9,10 +9,7 @@ class tls::params {
     $tls_cert_file			    = '/etc/apache2/TLS/horizon.crt'
     $tls_key_file			      = '/etc/apache2/TLS/horizon.key'
     $tls_ca_file            = '/etc/apache2/TLS/horizon.ca'
-    $root_url               = '/horizon'	
-    $apache_conf_file 		  = '/etc/apache2/conf-available/openstack-dashboard.conf'
-    $apache_vhost_file      = '/etc/apache2/sites-available/openstack-dashboard.conf'
-    $apache_port_file		    = '/etc/apache2/ports.conf'	
+    $root_url               = '/horizon'
   } elsif($::osfamily == 'RedHat') {
     $httpd_service_name 	  = 'httpd'
     $horizon_settings_file 	= '/etc/openstack-dashboard/local_settings'
@@ -23,10 +20,7 @@ class tls::params {
     $tls_cert_file			    = '/etc/httpd/TLS/horizon.crt'
     $tls_key_file			      = '/etc/httpd/TLS/horizon.key'
     $tls_ca_file            = '/etc/httpd/TLS/horizon.ca'
-    $root_url               = '/dashboard'	
-    $apache_conf_file 		  = '/etc/httpd/conf.d/openstack-dashboard.conf'
-    $apache_vhost_file      = '/etc/httpd/conf.d/ssl.conf'
-    $apache_port_file		    = '/etc/httpd/conf.d/ports.conf'	
+    $root_url               = '/dashboard'
   } else {
     fail("unsupported family ${::osfamily}")
   }

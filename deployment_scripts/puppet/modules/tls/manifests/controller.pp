@@ -5,16 +5,27 @@ class tls::controller(
   $horizon_crt,
   $horizon_key,
   $horizon_ca,
-  $external_ip
+  $external_ip,
+  $nodes_hash,
+  $servername,
+  $horizon_hash,
+  $cache_server_ip,
+  $cache_server_port,
+  $neutron,
+  $keystone_host,
+  $verbose,
+  $debug,
+  $package_ensure,
+  $use_syslog,
+  $nova_quota
 ) {
-  $nodes_hash = hiera('nodes')
   $node = filter_nodes($nodes_hash,'name',$::hostname)
   $internal_address = $node[0]['internal_address']
   $bind_address = $internal_address
   $server_hostname = $external_ip
   include tls::params
   $apache_tls_path = $tls::params::apache_tls_path
-  
+
   #format crt and key files
   file { "$apache_tls_path" :
         ensure  => directory,
@@ -50,10 +61,21 @@ class tls::controller(
     httpd_service   =>  $tls::params::httpd_service_name
   }->
   class { 'tls::horizon::horizon':
-    bind_address   =>  $bind_address,
+    bind_address          =>  $bind_address,
     controllers           =>  $controllers,
     public_virtual_ip     =>  $public_virtual_ip,
     internal_virtual_ip   =>  $internal_virtual_ip,
+    servername            => $servername,
+    horizon_hash          => $horizon_hash,
+    cache_server_ip       => $cache_server_ip,
+    cache_server_port     => $cache_server_port,
+    neutron               => $neutron,
+    keystone_host         => $keystone_host,
+    verbose               => $verbose,
+    debug                 => $debug,
+    package_ensure        => $package_ensure,
+    use_syslog            => $use_syslog,
+    nova_quota            => $nova_quota,
   }->  
   exec { "ha_proxy_restart":
     command => "/usr/sbin/crm resource restart p_haproxy",

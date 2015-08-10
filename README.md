@@ -35,7 +35,7 @@ Installation Guide
 Https plugin installation
 ----------------------------
 
-1. Clone the fuel-plugin repo from: https://github.com/stackforge/fuel-plugin-tls.git
+1. Clone the Fuel-plugin repo from: https://github.com/stackforge/fuel-plugin-tls.git
 
     ``git clone``
 
@@ -56,7 +56,7 @@ Https plugin installation
 
 6. Install the tls plugin:
 
-   ``fuel plugins --install tls-<x.x.x>.rpm``
+   ``Fuel plugins --install tls-<x.x.x>.rpm``
 
 6. Plugin is ready to use and can be enabled on the Settings tab of the Fuel web UI.
 
@@ -78,8 +78,8 @@ https plugin configuration
     - the certificate .key content
 
 	
-You must pass your .crt, .key, .ca files via fuel UI (settings tab)
-When you pass the content of the files in fuel ui, some "space" characters will appear, don't care about this puppet will remove it.
+You must pass your .crt, .key, .ca files via Fuel UI (settings tab)
+When you pass the content of the files in Fuel ui, some "space" characters will appear, don't care about this puppet will remove it.
 
 CRT file must be in the following format : 
 
@@ -136,7 +136,7 @@ X43ceACVpWiv5DmBtEUrB8dbwxEJFaoPGqEswwdh1FDxzfsPdapyqGI5B8zRjnpa
 SR2QEYok/8lZeDgUOhXkGg==
 -----END PRIVATE KEY-----
 
-CA file must be in the following format : 
+CA file must be in the following format :
 
 -----BEGIN CERTIFICATE-----
 MIIDXTCCAkWgAwIBAgIJAJHydV1v41XIMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV

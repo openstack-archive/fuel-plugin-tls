@@ -3,35 +3,35 @@ class tls::horizon::horizon(
   $controllers,
   $public_virtual_ip,
   $internal_virtual_ip,
+  $servername,
+  $horizon_hash,
+  $cache_server_ip,
+  $cache_server_port,
+  $neutron,
+  $keystone_host,
+  $verbose,
+  $debug,
+  $package_ensure,
+  $use_syslog,
+  $nova_quota  
 ) {
   include tls::params
   $ssl_port                       = 443
-  $horizon_hash                   = hiera_hash('horizon',{})
   $root_url                       = $tls::params::root_url
   $horizon_cert                   = $tls::params::tls_cert_file
   $horizon_key                    = $tls::params::tls_key_file
   $horizon_ca                     = $tls::params::tls_ca_file
   $controller_internal_addresses  = nodes_to_hash($controllers,'name','internal_address')
   $controller_nodes               = ipsort(values($controller_internal_addresses))
-  $cache_server_ip                = hiera('memcache_servers', $controller_nodes)
-  $cache_server_port              = hiera('memcache_server_port', '11211')
   $swift                          = false
-  $neutron                        = hiera('use_neutron')
   $horizon_app_links              = undef
-  $keystone_host                  = hiera('management_vip')
   $keystone_scheme                = 'http'
   $keystone_default_role          = '_member_'
-  $verbose                        = hiera('verbose', true)
-  $debug                          = hiera('debug')
   $api_result_limit               = 1000
-  $package_ensure                 = hiera('horizon_package_ensure', 'installed')
   $use_ssl                        = true
-  $use_syslog                     = hiera('use_syslog', true)
   $log_level                      = 'WARNING'
-  $nova_quota                     = hiera('nova_quota')
   $local_settings_template        = 'openstack/horizon/local_settings.py.erb'
   $django_session_engine          = 'django.contrib.sessions.backends.cache'
-  $servername                     = hiera('public_vip')
   $cache_backend                  = 'horizon.backends.memcached.HorizonMemcached'
   $cache_options                  = ["'SOCKET_TIMEOUT': 1","'SERVER_RETRIES': 1","'DEAD_RETRY': 1"]
   
@@ -128,15 +128,24 @@ class tls::horizon::horizon(
     horizon_ca             => $horizon_ca
   }
 
+  # Performance optimization for wsgi
+  if ($::memorysize_mb < 1200 or $::processorcount <= 3) {
+    $wsgi_processes = 2
+    $wsgi_threads = 9
+  } else {
+    $wsgi_processes = $::processorcount
+    $wsgi_threads = 15
+  }
+
   class { '::horizon::wsgi::apache':
     priority       => false,
     servername     => $public_virtual_ip,
     bind_address   => $bind_address,
     wsgi_processes => $wsgi_processes,
     wsgi_threads   => $wsgi_threads,
-    horizon_cert           => $horizon_cert ,
-    horizon_key            => $horizon_key,
-    horizon_ca            => $horizon_ca,
+    horizon_cert   => $horizon_cert ,
+    horizon_key    => $horizon_key,
+    horizon_ca     => $horizon_ca,
     listen_ssl     => $use_ssl,
     extra_params      => {
       default_vhost   => true,
